@@ -1,7 +1,5 @@
-gradio_imageslider
-gradio==4.29.0
-matplotlib
-opencv-python
+# gradio_imageslider
+# gradio==4.29.0
 numpy
 matplotlib
 scipy
@@ -10,7 +8,9 @@ tensorboard
 h5py
 tqdm
 einops
-torch
-torchvision
+# torch==2.10.0
+# torchvision=0.25.0
 timm
 wandb
+onnx
+onnxruntime
