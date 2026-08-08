@@ -35,7 +35,7 @@ class DinoV3Feature(nn.Module):
             'vitl': [4, 11, 17, 23]
         }
         self.model_name = model_name
-        self.encoder = self.freeze_(torch.hub.load(REPO_DIR, f"dinov3_{model_name}16", source='local', weights=WEIGHTS_URLS[model_name]))
+        self.encoder = self.freeze_(torch.hub.load(REPO_DIR, f"dinov3_{model_name}16", source='local', pretrained=False))
         self.embed_dim = self.dpt_configs[model_name]['dim']
         self.output_dim = self.dpt_configs[model_name]['features']
         self.out_channels = self.dpt_configs[model_name]['out_channels']

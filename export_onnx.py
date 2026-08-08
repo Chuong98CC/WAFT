@@ -60,7 +60,8 @@ def main():
     args = parse_args(parser)
 
     # ── Validate resolution ────────────────────────────────────────────────
-    pad_factor = 112  # DAv2 backbone
+    # pad_factor = 112  # DAv2 backbone
+    pad_factor = 16 # DinoV3 backbone
     if args.height % pad_factor != 0 or args.width % pad_factor != 0:
         print(
             f"ERROR: Input resolution ({args.height}x{args.width}) must be "
