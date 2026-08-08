@@ -12,7 +12,7 @@ from model.backbone.vit import VisionTransformer, MODEL_CONFIGS
 
 from utils.utils import coords_grid, Padder, bilinear_sampler
 
-import timm
+# import timm
 
 class resconv(nn.Module):
     def __init__(self, inp, oup, k=3, s=1):
@@ -66,7 +66,7 @@ class WAFTv2(nn.Module):
             self.encoder = TwinsFeatureEncoder(frozen=True)
             self.factor = 32
         elif args.feature_encoder == 'dav2':
-            self.encoder = DepthAnythingFeature(model_name="vits", pretrained=True, lvl=-3)
+            self.encoder = DepthAnythingFeature(model_name="vits", pretrained=False, lvl=-3)
             self.factor = 112
         elif args.feature_encoder == 'dinov3':
             self.encoder = DinoV3Feature(model_name="vits", lvl=-3)
@@ -109,7 +109,7 @@ class WAFTv2(nn.Module):
         up_flow = up_flow.permute(0, 1, 4, 2, 5, 3)
         up_info = torch.sum(mask * up_info, dim=2)
         up_info = up_info.permute(0, 1, 4, 2, 5, 3)
-        
+
         return up_flow.reshape(N, 2, 2*H, 2*W), up_info.reshape(N, C, 2*H, 2*W)
 
     def normalize_image(self, img):
@@ -129,7 +129,7 @@ class WAFTv2(nn.Module):
         image1 = padder.pad(image1)
         image2 = padder.pad(image2)
         flow_predictions = []
-        info_predictions = [] 
+        info_predictions = []
         N, _, H, W = image1.shape
         fmap1_pretrain = self.encoder(image1)
         fmap2_pretrain = self.encoder(image2)
@@ -158,10 +158,10 @@ class WAFTv2(nn.Module):
         for i in range(len(info_predictions)):
             flow_predictions[i] = padder.unpad(flow_predictions[i])
             info_predictions[i] = padder.unpad(info_predictions[i])
-        
+
         if flow_gt is not None:
             nf_predictions = []
-            for i in range(len(info_predictions)):                 
+            for i in range(len(info_predictions)):
                 raw_b = info_predictions[i][:, 2:]
                 log_b = torch.zeros_like(raw_b)
                 weight = info_predictions[i][:, :2]
@@ -173,6 +173,6 @@ class WAFTv2(nn.Module):
                 nf_predictions.append(nf_loss)
             output = {'flow': flow_predictions, 'info': info_predictions, 'nf': nf_predictions}
         else:
-            output = {'flow': flow_predictions, 'info': info_predictions}    
-        
+            output = {'flow': flow_predictions, 'info': info_predictions}
+
         return output

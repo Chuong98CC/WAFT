@@ -1,14 +1,14 @@
-import sys
+# import sys
 import argparse
 import os
 import cv2
-import math
+# import math
 import numpy as np
 
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.utils.data as data
+# import torch.nn as nn
+# import torch.nn.functional as F
+# import torch.utils.data as data
 
 from config.parser import parse_args
 
@@ -84,7 +84,7 @@ def vis_heatmap(name, image, heatmap):
 def get_heatmap(info, args):
     raw_b = info[:, 2:]
     log_b = torch.zeros_like(raw_b)
-    weight = info[:, :2].softmax(dim=1)              
+    weight = info[:, :2].softmax(dim=1)
     log_b[:, 0] = torch.clamp(raw_b[:, 0], min=0, max=args.var_max)
     log_b[:, 1] = torch.clamp(raw_b[:, 1], min=args.var_min, max=0)
     heatmap = (log_b * weight).sum(dim=1, keepdim=True)
@@ -200,7 +200,7 @@ def main():
     model = model.cuda()
     model.eval()
     wrapped_model = InferenceWrapper(model, scale=args.scale, train_size=args.image_size, pad_to_train_size=False, tiling=False)
-    
+
     if args.dataset == 'chairs':
         demo_chairs(wrapped_model, args)
     elif args.dataset == 'sintel':

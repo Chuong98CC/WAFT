@@ -24,3 +24,10 @@ weights
 *.npz
 *log*
 *hypersim_stats.json*
+weights
+*ckpts
+*.zip
+*.jpg
+*.png
+*.mp4
+data
