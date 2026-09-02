@@ -1,10 +1,20 @@
 #!/usr/bin/env python
-"""Run WAFT optical flow inference on a video file using an ONNX model.
+"""Run WAFT optical flow inference on a video file using an ONNX or TensorRT model.
 
-Usage:
+Usage (ONNX):
     python infer_video_onnx.py \\
         --input path/to/video.mp4 \\
         --onnx weights/waftv2_dav2_i5_448x672.onnx \\
+        --output-dir ./output \\
+        --output-mode all \\
+        --start 0 \\
+        --stride 4 \\
+        --max-frames 150
+
+Usage (TensorRT):
+    python infer_video_onnx.py \\
+        --input path/to/video.mp4 \\
+        --trt weights/waftv2/waftv2_dinov3_i5_640x480.engine \\
         --output-dir ./output \\
         --output-mode all \\
         --start 0 \\
@@ -77,7 +87,7 @@ def write_frame_outputs(
 # ---------------------------------------------------------------------------
 
 def infer_video(args: argparse.Namespace) -> None:
-    """Main inference loop over video frame pairs using an ONNX model."""
+    """Main inference loop over video frame pairs."""
 
     # ── Probe video ──────────────────────────────────────────────────────
     video_name = os.path.splitext(os.path.basename(args.input))[0]
@@ -89,9 +99,19 @@ def infer_video(args: argparse.Namespace) -> None:
     else:
         print(f"  Total frames: unknown (codec limitation)")
 
-    # ── Load ONNX model ──────────────────────────────────────────────────
-    print(f"\nLoading ONNX model from: {args.onnx}")
-    model = WAFTOnnx(args.onnx, device=args.device, bgr_input=not args.no_bgr_input)
+    # ── Load model (ONNX or TensorRT) ────────────────────────────────────
+    if args.trt:
+        from model.waft_trt import WAFTTrl
+
+        print(f"\nLoading TensorRT engine from: {args.trt}")
+        model = WAFTTrl(args.trt, bgr_input=not args.no_bgr_input)
+        backend = "TRT"
+    else:
+        print(f"\nLoading ONNX model from: {args.onnx}")
+        model = WAFTOnnx(args.onnx, device=args.device, bgr_input=not args.no_bgr_input)
+        backend = "ONNX"
+
+    print(f"  Backend:      {backend}")
     print(f"  Target resolution: {model.target_h}x{model.target_w}")
 
     # ── Open video & iterate ─────────────────────────────────────────────
@@ -154,7 +174,7 @@ def infer_video(args: argparse.Namespace) -> None:
         if not ret:
             break  # EOF
 
-        # Run ONNX inference — WAFTOnnx.__call__ handles pre/post processing
+        # Run inference — model.__call__ handles pre/post processing
         flow = model(frame_a, frame_b)  # → [H_orig, W_orig, 2] float32
 
         # Write per-frame outputs and collect for video encoding
@@ -210,14 +230,21 @@ def infer_video(args: argparse.Namespace) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Run WAFT optical flow inference on a video file (ONNX backend).",
+        description="Run WAFT optical flow inference on a video file (ONNX or TensorRT backend).",
     )
     parser.add_argument(
         "--input", required=True, type=str, help="Path to input video file."
     )
-    parser.add_argument(
-        "--onnx", required=True, type=str, help="Path to ONNX model (.onnx)."
+
+    # Mutually exclusive backend selection
+    backend = parser.add_mutually_exclusive_group(required=True)
+    backend.add_argument(
+        "--onnx", type=str, default=None, help="Path to ONNX model (.onnx)."
     )
+    backend.add_argument(
+        "--trt", type=str, default=None, help="Path to TensorRT engine (.engine / .trt / .plan)."
+    )
+
     parser.add_argument(
         "--output-dir",
         default="./output",
@@ -255,7 +282,7 @@ def main() -> None:
         default="cuda",
         type=str,
         choices=["cuda", "cpu"],
-        help="ONNX Runtime device (default: cuda).",
+        help="ONNX Runtime device (default: cuda). Ignored for TensorRT.",
     )
     parser.add_argument(
         "--no-bgr-input",

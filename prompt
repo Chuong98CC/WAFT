@@ -1,0 +1,5 @@
+write code to export the model WAFTv2 to pt2 format using torch.export, similar to @export_onnx.py
+
+You will need to write the export_pt2.py to export the model to pt2. Then, write a WAFTv2_PT2 class that loads the exported checkpoint, do preprocessing and post-processing. Then, an inference code that loads the model using the class WAFTv2_PT2 and run inference on an input image, similar to @infer_video.py or @infer_video_onnx.py but using the exported pt2 checkpoint instead of pytorch or onnx. Add the new files into the folder infer_pt2. If you need to add helper functions, organized them into several python files within utils folder. Include the minimal code for model loading, preprocess and post processing only, don't include visualization code. The visualization code can be imported from the main repo.
+
+When export and run inference bf16 precision. The exported checkpoint model will be saved to weights/walfv2/walfv2_bf16.pt2. The pytorch checkpoint and the command is the same with @scripts/export_onnx.sh.

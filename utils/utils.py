@@ -76,7 +76,9 @@ def bilinear_sampler(img, coords, mode='bilinear', mask=False):
     ygrid = 2*ygrid/(H-1) - 1
 
     grid = torch.cat([xgrid, ygrid], dim=-1)
-    img = F.grid_sample(img, grid, align_corners=True)
+    # grid_sample requires input & grid to share a dtype; coords_grid builds an
+    # fp32 grid (no-op for fp32 models, needed for bf16 inference/export).
+    img = F.grid_sample(img, grid.to(img.dtype), align_corners=True)
 
     if mask:
         mask = (xgrid > -1) & (ygrid > -1) & (xgrid < 1) & (ygrid < 1)

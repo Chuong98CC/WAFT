@@ -138,7 +138,9 @@ class WAFTv2(nn.Module):
         fmap1_2x = self.fmap_conv(torch.cat([fmap1_pretrain, fmap1_img], dim=1))
         fmap2_2x = self.fmap_conv(torch.cat([fmap2_pretrain, fmap2_img], dim=1))
         net = self.hidden_conv(torch.cat([fmap1_2x, fmap2_2x], dim=1))
-        flow_2x = torch.zeros(N, 2, H//2, W//2).to(image1.device)
+        # Init in the input dtype so the whole flow chain stays dtype-consistent
+        # (no-op for fp32; bf16 export/inference requires it).
+        flow_2x = torch.zeros(N, 2, H//2, W//2, dtype=image1.dtype, device=image1.device)
         for itr in range(iters):
             flow_2x = flow_2x.detach()
             coords2 = (coords_grid(N, H//2, W//2, device=image1.device) + flow_2x).detach()
